@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhiteBoard Teacher</title>
+</head>
+<body>
+    <canvas id="canvas" style="border: 2px solid black;">Your browser does not support Canvas.</canvas>
+    <div style="height: 50px; width: 50px; display: inline-block; margin: 5px; background-color: black; cursor: pointer;" onclick="change('black')"></div>
+    <div style="height: 50px; width: 50px; display: inline-block; margin: 5px; background-color: green; cursor: pointer;" onclick="change('green')"></div>
+    <div style="height: 50px; width: 50px; display: inline-block; margin: 5px; background-color: blue; cursor: pointer;" onclick="change('blue')"></div>
+    <div style="height: 50px; width: 50px; display: inline-block; margin: 5px; background-color: red; cursor: pointer;" onclick="change('red')"></div>
+    <div style="height: 50px; width: 50px; display: inline-block; margin: 5px; background-image: url('https://e7.pngegg.com/pngimages/211/890/png-clipart-computer-icons-eraser-icon-design-eraser-angle-pencil.png'); background-size: 50px 50px;" onclick="change('white')"></div>
+    <input type="range" id="slider" value="3" max="20" min="1" oninput="changeWidth()" style="cursor: pointer;">
+    <button onclick="clearCanvas()" style="cursor: pointer;">RESET</button>
+    <br>
+    <p style="font-family: sans-serif;">When you are about to RESET the whiteboard, please inform the class BEFORE doing so.</p>
+    <!--JavaScript-->
+    <script>
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        let ws = new WebSocket("ws://localhost:5000");
+
+        canvas.height = window.innerHeight*0.7;
+        canvas.width = window.innerWidth;
+
+        window.addEventListener("resize", () => {
+            canvas.height = window.innerHeight*0.7;
+            canvas.width = window.innerWidth;
+        });
+        let paint = false;
+
+        function startDraw() {
+            paint = true;
+            var info = {
+                width: ctx.lineWidth,
+                style: ctx.strokeStyle,
+                x: event.clientX,
+                y: event.clientY,
+                paint: 1
+            }
+            ws.send(JSON.stringify(info));
+        }
+
+        function endDraw() {
+            paint = false;
+            ctx.beginPath();
+            var info = {
+                width: ctx.lineWidth,
+                style: ctx.strokeStyle,
+                x: event.clientX,
+                y: event.clientY,
+                paint: 0
+            }
+            ws.send(JSON.stringify(info));
+        }
+
+        function draw(event) {
+            if(!paint)
+            return;
+            ctx.lineCap = 'round';
+            ctx.lineTo(event.clientX, event.clientY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(event.clientX, event.clientY);
+            var info = {
+                width: ctx.lineWidth,
+                style: ctx.strokeStyle,
+                x: event.clientX,
+                y: event.clientY,
+                paint: 2
+            }
+            ws.send(JSON.stringify(info));
+        }
+
+        function changeWidth() {
+            ctx.lineWidth = document.getElementById("slider").value;
+        }
+
+        function change(value) {
+            ctx.strokeStyle = value;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
+
+        canvas.addEventListener("mousedown", startDraw);
+        canvas.addEventListener("mouseup", endDraw);
+        canvas.addEventListener("mousemove", draw);
+
+
+    </script>
+    <!--End of JavaScript-->
+</body>
+</html>

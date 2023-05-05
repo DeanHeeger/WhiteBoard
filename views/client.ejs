@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhiteBoard Student</title>
+</head>
+<body>
+    <canvas id="canvas" style="border: 2px solid black;">Your browser does not support Canvas.</canvas>
+    <br>
+    <button onclick="clearCanvas()" style="cursor: pointer;">RESET</button>
+    <br>
+    <p style="font-family: sans-serif;">When you notice the whiteboard has been cleared, please click RESET!</p>
+
+    <!--JavaScript-->
+    <script>
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        let ws = new WebSocket("ws://localhost:5000");
+        
+        ws.onmessage = function(message) {
+            var info = JSON.parse(message.data);
+            if(info.paint == 0)
+            endDraw()
+            if(info.paint == 1)
+            startDraw()
+            if(info.paint == 2){
+                ctx.lineWidth = info.width;
+                ctx.strokeStyle = info.style;
+                draw(info.x, info.y);
+            }
+        }
+
+        canvas.height = window.innerHeight*0.7;
+        canvas.width = window.innerWidth;
+
+        window.addEventListener("resize", () => {
+            canvas.height = window.innerHeight*0.7;
+            canvas.width = window.innerWidth;
+        });
+        let paint = false;
+
+        function startDraw() {
+            paint = true;
+        }
+
+        function endDraw() {
+            paint = false;
+            ctx.beginPath();
+        }
+
+        function draw(x, y) {
+            if(!paint)
+            return;
+            ctx.lineCap = 'round';
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function changeWidth() {
+            ctx.lineWidth = document.getElementById("slider").value;
+        }
+
+        function change(value) {
+            ctx.strokeStyle = value;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+
+
+    </script>
+    <!--End of JavaScript-->
+</body>
+</html>
